@@ -2,7 +2,7 @@
   "name": "html-live-highlighter",
   "displayName": "HTML Live Highlighter",
   "description": "Live preview with real-time HTML element highlighting. Works with static files and external servers (Django, Flask, Express, etc.)",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "PrimeTek",
   "repository": {
     "type": "git",
