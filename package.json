@@ -1,0 +1,115 @@
+{
+  "name": "html-live-highlighter",
+  "displayName": "HTML Live Highlighter",
+  "description": "Live preview with real-time HTML element highlighting. Works with static files and external servers (Django, Flask, Express, etc.)",
+  "version": "1.0.0",
+  "publisher": "web-highlighter",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "html",
+    "live preview",
+    "highlight",
+    "django",
+    "devtools"
+  ],
+  "icon": "images/icon.png",
+  "activationEvents": [
+    "onLanguage:html",
+    "onCommand:html-highlighter.openPreview",
+    "onCommand:html-highlighter.setTargetUrl",
+    "onCommand:html-highlighter.restartProxy"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "html-highlighter.openPreview",
+        "title": "HTML Highlighter: Open Preview",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "html-highlighter.setTargetUrl",
+        "title": "HTML Highlighter: Set Target URL"
+      },
+      {
+        "command": "html-highlighter.restartProxy",
+        "title": "HTML Highlighter: Restart Proxy"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "html-highlighter.openPreview",
+          "when": "resourceLangId == html",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "HTML Live Highlighter",
+      "properties": {
+        "htmlHighlighter.targetUrl": {
+          "type": "string",
+          "default": "",
+          "description": "URL of the external server (e.g. http://127.0.0.1:8000). Leave empty to use the active HTML file."
+        },
+        "htmlHighlighter.proxyPort": {
+          "type": "number",
+          "default": 3131,
+          "description": "Local port for the proxy server."
+        },
+        "htmlHighlighter.liveReload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reload the preview automatically when the file changes."
+        },
+        "htmlHighlighter.reloadDelay": {
+          "type": "number",
+          "default": 300,
+          "description": "Debounce delay in milliseconds before triggering a reload."
+        },
+        "htmlHighlighter.showTooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a DevTools-style tooltip with tag, id and classes."
+        },
+        "htmlHighlighter.highlightColor": {
+          "type": "string",
+          "default": "#4db6f0",
+          "description": "Color used for the element highlight overlay."
+        },
+        "htmlHighlighter.syncScroll": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-scroll the preview to the highlighted element."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node esbuild.js --production",
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
+    "htmlparser2": "^9.1.0",
+    "ws": "^8.16.0",
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test — HTML Live Highlighter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      padding: 32px;
+    }
+    header {
+      background: #2b6cb0;
+      color: #fff;
+      padding: 24px 32px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+    header h1 { font-size: 1.8rem; }
+    header p { opacity: 0.8; margin-top: 4px; }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h2 { font-size: 1.1rem; margin-bottom: 8px; color: #2b6cb0; }
+    .card p { font-size: 0.92rem; line-height: 1.6; color: #4a5568; }
+    .card .badge {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      background: #ebf8ff;
+      color: #2b6cb0;
+      border: 1px solid #bee3f8;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <header id="main-header">
+    <h1>HTML Live Highlighter Test</h1>
+    <p>Mueve el cursor entre los elementos del editor y observa el resaltado en el preview.</p>
+  </header>
+
+  <div class="card-grid">
+    <div class="card" id="card-alpha">
+      <h2>Elemento Alpha</h2>
+      <p>Coloca el cursor en este div y debería resaltarse con borde azul en el preview.</p>
+      <span class="badge">Tarjeta 1</span>
+    </div>
+
+    <div class="card" id="card-beta">
+      <h2>Elemento Beta</h2>
+      <p>Otro div para probar el cambio de resaltado al mover el cursor.</p>
+      <span class="badge">Tarjeta 2</span>
+    </div>
+
+    <div class="card" id="card-gamma">
+      <h2>Elemento Gamma</h2>
+      <p>El tooltip debería mostrar el tag, id y clases de cada elemento.</p>
+      <span class="badge">Tarjeta 3</span>
+    </div>
+  </div>
+
+  <footer>
+    <p>HTML Live Highlighter © 2025 — Prueba de resaltado bidireccional</p>
+  </footer>
+</body>
+</html>

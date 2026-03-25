@@ -1,0 +1,37 @@
+/* HTML Live Highlighter — Overlay & Tooltip Styles
+   Injected into every previewed page by the proxy */
+
+#__hl-overlay__ {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  border: 2px solid var(--hl-color, #4db6f0);
+  background: rgba(77, 182, 240, 0.12);
+  border-radius: 2px;
+  transition: top 80ms ease, left 80ms ease, width 80ms ease, height 80ms ease;
+}
+
+#__hl-tooltip__ {
+  position: fixed;
+  z-index: 2147483647;
+  pointer-events: none;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #4db6f0;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#__hl-tooltip__ .hl-tag  { color: #89dceb; }
+#__hl-tooltip__ .hl-id   { color: #f38ba8; }
+#__hl-tooltip__ .hl-cls  { color: #a6e3a1; }
+#__hl-tooltip__ .hl-dims { color: #fab387; margin-left: 8px; }
