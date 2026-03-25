@@ -208,16 +208,23 @@ export class ProxyServer {
           proxyRes.on('end', () => {
             const injected = injectScript(body, this.port);
             const headers = { ...proxyRes.headers };
-            // Remove content-encoding (we re-encode the body)
-            delete headers['content-encoding'];
-            delete headers['content-length'];
+            // Remove headers that would block iframe embedding or break script injection
+            delete headers['content-encoding'];       // we re-encode the body
+            delete headers['content-length'];         // length changes after injection
+            delete headers['x-frame-options'];        // Django SAMEORIGIN blocks iframe
+            delete headers['content-security-policy'];// Django CSP may block our script
+            delete headers['x-content-type-options']; // allow sniffing for injected types
             headers['content-type'] = 'text/html; charset=utf-8';
             res.writeHead(proxyRes.statusCode ?? 200, headers);
             res.end(injected);
           });
         } else {
           // Pass through non-HTML responses (CSS, JS, images, etc.)
-          res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
+          // Still strip framing-related headers to avoid blocking
+          const headers = { ...proxyRes.headers };
+          delete headers['x-frame-options'];
+          delete headers['content-security-policy'];
+          res.writeHead(proxyRes.statusCode ?? 200, headers);
           proxyRes.pipe(res, { end: true });
         }
       });

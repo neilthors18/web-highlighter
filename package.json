@@ -2,7 +2,7 @@
   "name": "html-live-highlighter",
   "displayName": "HTML Live Highlighter",
   "description": "Live preview with real-time HTML element highlighting. Works with static files and external servers (Django, Flask, Express, etc.)",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "PrimeTek",
   "repository": {
     "type": "git",
@@ -22,12 +22,6 @@
     "devtools"
   ],
   "icon": "images/icon.png",
-  "activationEvents": [
-    "onLanguage:html",
-    "onCommand:html-highlighter.openPreview",
-    "onCommand:html-highlighter.setTargetUrl",
-    "onCommand:html-highlighter.restartProxy"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -102,14 +96,10 @@
     "package": "vsce package"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6",
     "htmlparser2": "^9.1.0",
-    "ws": "^8.16.0",
-    "mime-types": "^2.1.35"
+    "ws": "^8.16.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
     "@types/ws": "^8.5.10",
