@@ -31,6 +31,21 @@ function getMimeType(filePath: string): string {
 
 const INJECTED_ROUTE = '/__highlighter__';
 
+/**
+ * Rewrites Set-Cookie headers from Django to remove SameSite and Secure
+ * attributes that prevent cookies from being sent inside the VS Code webview.
+ * Without this, Django's csrftoken cookie won't be sent on POST requests.
+ */
+function relaxCookies(setCookie: string | string[] | undefined): string[] | undefined {
+  if (!setCookie) { return undefined; }
+  const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+  return cookies.map((c) =>
+    c
+      .replace(/;\s*SameSite=\w+/gi, '')  // remove SameSite=Lax|Strict|None
+      .replace(/;\s*Secure\b/gi, '')      // remove Secure (proxy is plain HTTP)
+  );
+}
+
 /** Reads a media file bundled with the extension */
 function readMediaFile(context: vscode.ExtensionContext, filename: string): string {
   const filePath = context.asAbsolutePath(path.join('media', filename));
@@ -54,6 +69,13 @@ export class ProxyServer {
   private staticHtml: string = '';
   private staticFilePath: string = '';
   private parser: HtmlParser = new HtmlParser();
+  /**
+   * Server-side cookie jar.
+   * VS Code webview panels (Electron) do not reliably persist cookies between
+   * requests. The proxy stores Django's cookies (csrftoken, sessionid, etc.)
+   * here and injects them into every request it forwards, bypassing the browser.
+   */
+  private cookieJar: Map<string, string> = new Map();
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -91,6 +113,7 @@ export class ProxyServer {
     return new Promise((resolve) => {
       this.clients.forEach((ws) => ws.terminate());
       this.clients.clear();
+      this.cookieJar.clear(); // reset session on proxy restart
       this.wss?.close();
       this.server?.close(() => resolve());
     });
@@ -185,6 +208,8 @@ export class ProxyServer {
         return this.serveAsset(url, res);
       }
 
+      const cookieHeader = this.buildCookieHeader(req.headers['cookie'] as string | undefined);
+
       const options: http.RequestOptions = {
         hostname: target.hostname,
         port: target.port || 80,
@@ -193,10 +218,15 @@ export class ProxyServer {
         headers: {
           ...req.headers,
           host: target.host,
+          // Override with server-side cookie jar (bypasses webview cookie limits)
+          ...(cookieHeader ? { cookie: cookieHeader } : {}),
         },
       };
 
       const proxyReq = http.request(options, (proxyRes) => {
+        // ── Store cookies from every Django response ──────────────────────────
+        this.storeCookies(proxyRes.headers['set-cookie']);
+
         const contentType = proxyRes.headers['content-type'] ?? '';
         const isHtml = contentType.includes('text/html');
 
@@ -214,16 +244,21 @@ export class ProxyServer {
             delete headers['x-frame-options'];        // Django SAMEORIGIN blocks iframe
             delete headers['content-security-policy'];// Django CSP may block our script
             delete headers['x-content-type-options']; // allow sniffing for injected types
+            // Relax cookie restrictions so csrftoken is stored/sent correctly
+            const relaxed = relaxCookies(headers['set-cookie'] as string | string[] | undefined);
+            if (relaxed) { headers['set-cookie'] = relaxed; }
             headers['content-type'] = 'text/html; charset=utf-8';
             res.writeHead(proxyRes.statusCode ?? 200, headers);
             res.end(injected);
           });
         } else {
           // Pass through non-HTML responses (CSS, JS, images, etc.)
-          // Still strip framing-related headers to avoid blocking
           const headers = { ...proxyRes.headers };
           delete headers['x-frame-options'];
           delete headers['content-security-policy'];
+          // Relax cookie restrictions on non-HTML responses too (e.g. login redirects)
+          const relaxed = relaxCookies(headers['set-cookie'] as string | string[] | undefined);
+          if (relaxed) { headers['set-cookie'] = relaxed; }
           res.writeHead(proxyRes.statusCode ?? 200, headers);
           proxyRes.pipe(res, { end: true });
         }
@@ -259,7 +294,51 @@ export class ProxyServer {
     }
   }
 
+  // ── Cookie Jar ───────────────────────────────────────────────────────────────
+
+  /**
+   * Parses Set-Cookie headers from Django and stores name=value pairs.
+   * Attributes like Path, HttpOnly, SameSite, Expires are intentionally ignored
+   * because we manage the jar ourselves.
+   */
+  private storeCookies(setCookie: string | string[] | undefined): void {
+    if (!setCookie) { return; }
+    const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+    for (const raw of cookies) {
+      const [nameValue] = raw.split(';');
+      const eqIndex = nameValue.indexOf('=');
+      if (eqIndex === -1) { continue; }
+      const name = nameValue.slice(0, eqIndex).trim();
+      const value = nameValue.slice(eqIndex + 1).trim();
+      if (name) { this.cookieJar.set(name, value); }
+    }
+  }
+
+  /**
+   * Builds a Cookie header string merging the server-side jar with any cookies
+   * the browser did send. Jar values take precedence (they came from Django).
+   */
+  private buildCookieHeader(browserCookie: string | undefined): string {
+    // Start with browser cookies (if any) as a base
+    const base = new Map<string, string>();
+    if (browserCookie) {
+      for (const pair of browserCookie.split(';')) {
+        const eqIndex = pair.indexOf('=');
+        if (eqIndex === -1) { continue; }
+        const name = pair.slice(0, eqIndex).trim();
+        const value = pair.slice(eqIndex + 1).trim();
+        if (name) { base.set(name, value); }
+      }
+    }
+    // Jar values override browser cookies
+    for (const [name, value] of this.cookieJar) {
+      base.set(name, value);
+    }
+    return [...base.entries()].map(([n, v]) => `${n}=${v}`).join('; ');
+  }
+
   // ── WebSocket helpers ────────────────────────────────────────────────────────
+
 
   private broadcast(message: object): void {
     const data = JSON.stringify(message);
