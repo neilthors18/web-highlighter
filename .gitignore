@@ -1,5 +1,29 @@
+# Dependencies
 node_modules/
+
+# Build output
 out/
+
+# Packaged extension
 *.vsix
+
+# VS Code test runner
 .vscode-test/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*
+
+# TypeScript cache
+*.tsbuildinfo
+
+
 test/
